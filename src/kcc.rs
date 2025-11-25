@@ -34,7 +34,6 @@ pub struct CharacterController {
     pub standing_view_height: f32,
     pub crouch_view_height: f32,
     pub ground_distance: f32,
-    pub jump_detection_speed: f32,
     pub min_walk_cos: f32,
     pub stop_speed: f32,
     pub friction_hz: f32,
@@ -42,8 +41,7 @@ pub struct CharacterController {
     pub air_acceleration_hz: f32,
     pub gravity: f32,
     pub step_size: f32,
-    pub jump_speed: f32,
-    pub crouch_scale: f32,
+    pub crouch_speed_scale: f32,
     pub speed: f32,
     pub air_speed: f32,
     pub move_and_slide: MoveAndSlideConfig,
@@ -61,7 +59,6 @@ impl Default for CharacterController {
             standing_view_height: 1.7,
             crouch_view_height: 1.2,
             ground_distance: 0.02,
-            jump_detection_speed: 10.0,
             min_walk_cos: 0.766,
             stop_speed: 2.4,
             friction_hz: 4.0,
@@ -69,8 +66,7 @@ impl Default for CharacterController {
             air_acceleration_hz: 12.0,
             gravity: 36.0,
             step_size: 1.0,
-            jump_speed: 12.0,
-            crouch_scale: 0.3,
+            crouch_speed_scale: 1.0 / 3.0,
             speed: 15.5,
             air_speed: 1.5,
             move_and_slide: MoveAndSlideConfig {
@@ -135,7 +131,7 @@ impl CharacterController {
             Vec3::Y * (crouch_height - standing_height) / 2.0,
             Rotation::default(),
             crouching_collider,
-        )])
+        )]);
     }
 }
 
@@ -638,7 +634,7 @@ fn calculate_wish_velocity(state: &CharacterControllerState, ctx: &Ctx) -> Vec3 
 
     // clamp the speed lower if ducking
     let speed = if state.crouching {
-        ctx.cfg.speed * ctx.cfg.crouch_scale
+        ctx.cfg.speed * ctx.cfg.crouch_speed_scale
     } else {
         ctx.cfg.speed
     };
@@ -670,76 +666,6 @@ fn check_duck(
         let is_intersecting = is_intersecting(transform, state, move_and_slide, ctx);
         state.crouching = is_intersecting;
     }
-}
-
-fn ground_trace(
-    transform: Transform,
-    move_and_slide: &MoveAndSlide,
-    state: &mut CharacterControllerState,
-    ctx: &Ctx,
-) {
-    let cast_dir = Dir3::NEG_Y;
-    let cast_dist = ctx.cfg.ground_distance;
-    let trace = move_and_slide.cast_move(
-        state.collider(),
-        transform.translation,
-        transform.rotation,
-        cast_dir * cast_dist,
-        ctx.cfg.move_and_slide.skin_width,
-        &ctx.cfg.filter,
-    );
-    state.previous_grounded = state.grounded;
-    state.grounded = trace;
-
-    // if the trace didn't hit anything, we are in free fall
-    let Some(trace) = trace else {
-        ground_trace_missed();
-        state.grounded_entity = None;
-        state.ground_plane = false;
-        state.walking = false;
-        return;
-    };
-
-    // check if getting thrown off the ground
-    if state.velocity.y > 0.0 && state.velocity.dot(trace.normal1) > ctx.cfg.jump_detection_speed {
-        // here we could trigger a jump start event
-        state.grounded_entity = None;
-        state.ground_plane = false;
-        state.walking = false;
-        return;
-    }
-
-    // slopes that are too steep will not be considered onground
-    if trace.normal1.y < ctx.cfg.min_walk_cos {
-        state.grounded_entity = None;
-        state.ground_plane = true;
-        state.walking = false;
-        return;
-    }
-
-    state.ground_plane = true;
-    state.walking = true;
-    if state.grounded_entity.is_none() {
-        // trigger landing event
-        crash_land()
-    }
-    state.grounded_entity = Some(trace.entity);
-}
-
-fn ground_trace_missed() {
-    // here we can
-    // - trigger transitions into free-fall
-    // - do a trace if we are falling quite a bit
-    // - if so, trigger the appropriate falling animation
-}
-
-fn crash_land() {
-    // here we can
-    // - check how hard we crashed
-    // - trigger crash landing event
-    //   - deal damage
-    //   - play anims
-    //   - reset bob cycle
 }
 
 #[must_use]

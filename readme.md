@@ -21,7 +21,7 @@ With that said, here are some goals of Ahoy:
 - Handle common collider shapes: Cuboids, cylinders, spheres, and in a pinch capsules
   - Sorry, Parry is not very good at capsules. You may want to use a cylinder instead for now :/
   - Other shapes may or may not work, at your discretion
-- Be tightly integrated with bevy_enhanced_input
+- Be tightly integrated with `bevy_enhanced_input`
   - If you don't use BEI already, you really should :)
   - This allows Ahoy to neatly abstracts away some nasty internal business like input accumulation,
     while allowing you to bind its behaviors to whatever you want. 
@@ -40,7 +40,7 @@ In contrast, here are some deliberate non-goals:
 - Code specifically for disabling tech like air strafing
 - Support schedules outside Bevy's fixed timestep. 
   - You can configure the schedule, but it must run as part of the fixed main loop to correctly work with Ahoy.
-- Work without bevy_enhanced_input
+- Work without `bevy_enhanced_input`
 - Other up-axis than Y
 - Work as a dynamic character controller
 - Support every possible collider shape

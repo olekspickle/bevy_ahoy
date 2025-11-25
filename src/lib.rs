@@ -1,6 +1,6 @@
 #![doc = include_str!("../readme.md")]
 
-/// Everything you need to get started with bevy_ahoy
+/// Everything you need to get started with `bevy_ahoy`
 pub mod prelude {
     pub(crate) use {
         avian3d::prelude::*,
