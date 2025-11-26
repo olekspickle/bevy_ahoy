@@ -42,7 +42,7 @@ TODO ;)
 
 ## Inspiration
 
-- The underlying move-and-slide uses Avian's implementation, the ispirations for which are [listed in the implementing PR](https://github.com/avianphysics/avian/pull/894).
+- The underlying move-and-slide uses Avian's implementation, the inspirations for which are [listed in the implementing PR](https://github.com/avianphysics/avian/pull/894).
 - The core principles of the KCC derive from the Quake KCC. I highly recommend reading [myria666/qMovementDoc](https://github.com/myria666/qMovementDoc) if you want to know how it works :)
 - The specific implementation flavor of the KCC is heavily inspired by Counter Strike: Source
 
@@ -90,7 +90,7 @@ In contrast, here are some deliberate non-goals:
   - You can configure the schedule, but it must run as part of the fixed main loop to correctly work with Ahoy.
 - Work without `bevy_enhanced_input`
 - Other up-axis than Y
-  - This means no top-down support for now
+  - This means that top-down games must also use Y as up!
 - Work as a dynamic character controller
 - Support every possible collider shape
 - Reproduce the behavior of Quake or Source exactly.
