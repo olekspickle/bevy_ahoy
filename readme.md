@@ -22,6 +22,9 @@ This tradeoff allows Ahoy to fully define its own separate model of how a charac
 - [x] **Ramp walking**: walk up ramps under a certain angle of steepness. Fall down if the ramp is too steep.
 - [x] **Ground snapping**: walk down ramps and stairs instead of flying off of them
 - [x] **Quake/Source movement tech**: air strafe, surf, bunny hopping, etc.
+- [ ] **Push objects**: Move into dynamic rigid bodies to apply force to them
+- [ ] **Be pushed**: Stand next to a moving kinematic rigid body to be pushed by it. Put the player in peril by surrounding them with approaching walls!
+- [ ] **Moving platforms**: Step onto moving kinematic rigid bodies to move with them. Useful for elevators, conveyor belts, etc.
 - [ ] **First person camera controller**: Add `CameraOfCharacterController` to a camera to have out-of-the-box first person camera behavior
 - [ ] **Events**: observe events for jump start, landing, stair stepping, etc. to add sound effects, particles, damage the character, etc.
 - [ ] **Wall running**: run along walls for a given distance and jump off of them
