@@ -2,12 +2,7 @@
 
 use avian3d::prelude::*;
 use bevy::{
-    anti_alias::taa::TemporalAntiAliasing,
-    light::CascadeShadowConfigBuilder,
-    pbr::{Atmosphere, ScreenSpaceAmbientOcclusion},
-    post_process::bloom::Bloom,
-    prelude::*,
-    scene::SceneInstanceReady,
+    light::CascadeShadowConfigBuilder, pbr::Atmosphere, post_process::bloom::Bloom, prelude::*,
 };
 use bevy_ahoy::{kcc::CharacterControllerState, prelude::*};
 use bevy_ecs::world::FilteredEntityRef;
@@ -177,14 +172,11 @@ fn tweak_materials(
     mut material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in asset_events.read() {
-        match event {
-            AssetEvent::LoadedWithDependencies { id } => {
-                let Some(material) = material_assets.get_mut(*id) else {
-                    continue;
-                };
-                material.perceptual_roughness = 0.8;
-            }
-            _ => {}
+        if let AssetEvent::LoadedWithDependencies { id } = event {
+            let Some(material) = material_assets.get_mut(*id) else {
+                continue;
+            };
+            material.perceptual_roughness = 0.8;
         }
     }
 }

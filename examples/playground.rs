@@ -3,16 +3,11 @@ use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     gltf::GltfPlugin,
     input::common_conditions::input_just_pressed,
-    light::CascadeShadowConfigBuilder,
-    log::{LogPlugin, tracing_subscriber::field::MakeExt},
-    pbr::Atmosphere,
     prelude::*,
-    scene::SceneInstanceReady,
-    window::{CursorGrabMode, CursorOptions, WindowResolution},
+    window::{CursorGrabMode, CursorOptions},
 };
-use bevy_ahoy::{kcc::CharacterControllerState, prelude::*};
-use bevy_enhanced_input::prelude::{Release, *};
-use bevy_mod_mipmap_generator::{MipmapGeneratorPlugin, generate_mipmaps};
+use bevy_ahoy::prelude::*;
+use bevy_enhanced_input::prelude::*;
 use bevy_trenchbroom::{physics::SceneCollidersReady, prelude::*};
 use bevy_trenchbroom_avian::AvianPhysicsBackend;
 use core::ops::Deref;
