@@ -5,9 +5,9 @@
 
 A fun 3D Kinematic Character Controller for [Bevy](https://github.com/bevyengine/bevy) + [Avian](https://github.com/avianphysics/avian) + [BEI](https://github.com/simgine/bevy_enhanced_input).
 
+<https://github.com/user-attachments/assets/ad1648d9-8a3d-43a6-9e20-886d6bb2eaad>
 
-<https://github.com/user-attachments/assets/56175a4a-7eda-4a71-9ccf-92d108955b94>
-
+*Surf gameplay by Boonie, who kindly converted the Utopia surf map to a compatible format. See assets/maps/license.md for licensing information*
 
 ## What does that mean?
 
