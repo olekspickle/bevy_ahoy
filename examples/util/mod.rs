@@ -30,7 +30,7 @@ impl Plugin for ExampleUtilPlugin {
             FixPointerUnlockPlugin,
             FramepacePlugin,
         ))
-        .add_systems(Startup, setup_ui)
+        .add_systems(Startup, (setup_ui, spawn_crosshair))
         .add_systems(
             Update,
             (
@@ -311,4 +311,21 @@ fn unlock_cursor_web(
 ) {
     cursor_options.grab_mode = CursorGrabMode::None;
     cursor_options.visible = true;
+}
+
+/// Show a crosshair for better aiming
+fn spawn_crosshair(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let crosshair_texture = asset_server.load("sprites/crosshair.png");
+    commands
+        .spawn(Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn(ImageNode::new(crosshair_texture).with_color(Color::WHITE.with_alpha(0.3)));
+        });
 }

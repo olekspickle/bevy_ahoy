@@ -33,7 +33,7 @@ avian_pickup = { version= "0.3.0" }
 
 
 [dev-dependencies]
-bevy = { version = "0.17", features = ["track_location"] }
+bevy = { version = "0.17", features = ["track_location", "file_watcher", "dynamic_linking"] }
 bevy_trenchbroom = "0.11.0"
 bevy_trenchbroom_avian = "0.11.0"
 bevy_mod_mipmap_generator = { git = "https://github.com/DGriffin91/bevy_mod_mipmap_generator" }
