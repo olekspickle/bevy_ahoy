@@ -162,6 +162,6 @@ In contrast, here are some deliberate non-goals:
 
 ## Compatibility
 
-| bevy        | bevy_bae               |
+| bevy        | bevy_ahoy              |
 |-------------|------------------------|
 | 0.17        | `main`                 |
