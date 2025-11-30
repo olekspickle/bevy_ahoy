@@ -444,7 +444,11 @@ fn update_grounded(
         set_grounded(None, velocity, colliders, state);
     } else {
         let cast_dir = Dir3::NEG_Y;
-        let cast_dist = ctx.cfg.ground_distance;
+        let cast_dist = if state.base_velocity.y < 0.0 {
+            ctx.cfg.ground_distance - state.base_velocity.y * ctx.dt
+        } else {
+            ctx.cfg.ground_distance
+        };
         let hit = move_and_slide.cast_move(
             state.collider(),
             transform.translation,
