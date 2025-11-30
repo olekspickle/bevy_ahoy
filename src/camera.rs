@@ -74,7 +74,7 @@ pub(crate) fn sync_camera_transform(
                 kcc_transform.translation + Vec3::Y * (-height / 2.0 + view_height);
             camera_transform.translation.x = new_translation.x;
             camera_transform.translation.z = new_translation.z;
-            let smooth_time = Duration::from_millis(300);
+            let smooth_time = Duration::from_millis(200);
             if state.last_step_up.elapsed() < smooth_time
                 || state.last_step_down.elapsed() < smooth_time
             {
