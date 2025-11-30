@@ -6,9 +6,9 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions},
 };
-use bevy_ahoy::{PickupHoldConfig, prelude::*};
+use bevy_ahoy::{PickupHoldConfig, PickupPullConfig, prelude::*};
 use bevy_enhanced_input::prelude::{Press, *};
-use bevy_trenchbroom::{physics::SceneCollidersReady, prelude::*};
+use bevy_trenchbroom::prelude::*;
 use bevy_trenchbroom_avian::AvianPhysicsBackend;
 use core::ops::Deref;
 
@@ -84,10 +84,11 @@ fn spawn_player(
             CharacterController::default(),
             RigidBody::Kinematic,
             Collider::cylinder(0.7, 1.8),
+            Mass(90.0),
         ))
         .id();
     commands.entity(camera.into_inner()).insert((
-        CharacterControllerCameraOf(player),
+        CharacterControllerCameraOf::new(player),
         PickupConfig {
             prop_filter: SpatialQueryFilter::from_mask(CollisionLayer::Prop),
             actor_filter: SpatialQueryFilter::from_mask(CollisionLayer::Player),
@@ -95,6 +96,10 @@ fn spawn_player(
             hold: PickupHoldConfig {
                 preferred_distance: 0.9,
                 linear_velocity_easing: 0.8,
+                ..default()
+            },
+            pull: PickupPullConfig {
+                max_prop_mass: 1000.0,
                 ..default()
             },
             ..default()
@@ -201,28 +206,20 @@ fn on_add_prop<T: QuakeClass + Deref<Target = bool>>(mut world: DeferredWorld, c
     }
     let dynamic = *world.get::<T>(ctx.entity).unwrap().deref();
     let assets = world.resource::<AssetServer>().clone();
-    world
-        .commands()
-        .entity(ctx.entity)
-        .insert((
-            SceneRoot(
-                assets
-                    .load(GltfAssetLabel::Scene(0).from_asset(T::CLASS_INFO.model_path().unwrap())),
-            ),
-            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh)
-                .with_default_layers(CollisionLayers::new(CollisionLayer::Prop, LayerMask::ALL)),
-            if dynamic {
-                RigidBody::Dynamic
-            } else {
-                RigidBody::Static
-            },
-            TransformInterpolation,
-        ))
-        .observe(|ready: On<SceneCollidersReady>, mut commands: Commands| {
-            for collider in &ready.collider_entities {
-                commands.entity(*collider).insert(ColliderDensity(100.0));
-            }
-        });
+    world.commands().entity(ctx.entity).insert((
+        SceneRoot(
+            assets.load(GltfAssetLabel::Scene(0).from_asset(T::CLASS_INFO.model_path().unwrap())),
+        ),
+        ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh)
+            .with_default_layers(CollisionLayers::new(CollisionLayer::Prop, LayerMask::ALL))
+            .with_default_density(100.0),
+        if dynamic {
+            RigidBody::Dynamic
+        } else {
+            RigidBody::Static
+        },
+        TransformInterpolation,
+    ));
 }
 
 fn capture_cursor(mut cursor: Single<&mut CursorOptions>) {

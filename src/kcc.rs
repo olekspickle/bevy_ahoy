@@ -1,6 +1,4 @@
-use bevy_ecs::{
-    intern::Interned, relationship::RelationshipSourceCollection as _, schedule::ScheduleLabel,
-};
+use bevy_ecs::{intern::Interned, schedule::ScheduleLabel};
 use core::time::Duration;
 use tracing::warn;
 
@@ -37,6 +35,8 @@ fn run_kcc(
     for (cfg, mut state, mut input, mut transform, mut velocity, cam) in &mut kccs {
         state.touching_entities.clear();
         state.last_ground.tick(time.delta());
+        state.last_step_up.tick(time.delta());
+        state.last_step_down.tick(time.delta());
 
         let ctx = Ctx {
             orientation: cam
@@ -242,6 +242,7 @@ fn step_move(
 ) {
     let original_position = transform.translation;
     let original_velocity = *velocity;
+    let original_touching_entities = state.touching_entities.clone();
 
     // Slide the direct path
     move_character(transform, velocity, move_and_slide, state, ctx);
@@ -252,6 +253,7 @@ fn step_move(
 
     transform.translation = original_position;
     *velocity = original_velocity;
+    state.touching_entities = original_touching_entities;
 
     // step up
     let cast_dir = Dir3::Y;
@@ -268,6 +270,22 @@ fn step_move(
 
     let dist = hit.map(|hit| hit.distance).unwrap_or(cast_len);
     transform.translation += cast_dir * dist;
+
+    // Verify we have enough space to stand
+    let hit = move_and_slide.cast_move(
+        state.collider(),
+        transform.translation,
+        transform.rotation,
+        velocity.normalize_or_zero() * ctx.cfg.min_step_ledge_space,
+        ctx.cfg.move_and_slide.skin_width,
+        &ctx.cfg.filter,
+    );
+    if hit.is_some() {
+        transform.translation = down_position;
+        *velocity = down_velocity;
+        state.touching_entities = down_touching_entities;
+        return;
+    }
 
     // try to slide from upstairs
     move_character(transform, velocity, move_and_slide, state, ctx);
@@ -286,6 +304,7 @@ fn step_move(
     if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos || ctx.cfg.step_into_air) {
         transform.translation = down_position;
         *velocity = down_velocity;
+        state.touching_entities = down_touching_entities;
         return;
     };
     let hit = hit.unwrap();
@@ -294,7 +313,7 @@ fn step_move(
 
     let vec_up_pos = transform.translation;
 
-    // use the one that wend further
+    // use the one that went further
     let down_dist = down_position.xz().distance_squared(original_position.xz());
     let up_dist = vec_up_pos.xz().distance_squared(original_position.xz());
     if down_dist >= up_dist {
@@ -303,6 +322,7 @@ fn step_move(
         state.touching_entities = down_touching_entities;
     } else {
         velocity.y = down_velocity.y;
+        state.last_step_up.reset();
     }
 }
 
@@ -328,7 +348,7 @@ fn move_character(
         &config,
         &ctx.cfg.filter,
         |hit| {
-            touching_entities.insert(hit.entity);
+            touching_entities.push(hit.into());
             true
         },
     );
@@ -340,7 +360,7 @@ fn move_character(
 fn snap_to_ground(
     transform: &mut Transform,
     move_and_slide: &MoveAndSlide,
-    state: &CharacterControllerState,
+    state: &mut CharacterControllerState,
     ctx: &Ctx,
 ) {
     let cast_dir = Vec3::Y;
@@ -376,7 +396,11 @@ fn snap_to_ground(
     {
         return;
     }
+    let original_position = transform.translation;
     transform.translation = start + cast_dir * hit.distance;
+    if original_position.y - transform.translation.y > ctx.cfg.step_down_detection_distance {
+        state.last_step_down.reset();
+    }
     depenetrate_character(transform, move_and_slide, state, ctx);
 }
 
