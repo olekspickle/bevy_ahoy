@@ -62,7 +62,7 @@ fn run_kcc(
         depenetrate_character(&mut transform, &move_and_slide, &state, &ctx);
 
         update_grounded(
-            &transform,
+            *transform,
             &mut velocity,
             &move_and_slide,
             colliders,
@@ -75,7 +75,14 @@ fn run_kcc(
         // here we'd handle things like spectator, dead, noclip, etc.
         start_gravity(&mut velocity, &mut state, &ctx);
 
-        handle_jump(&mut velocity, &mut input, colliders, &mut state, &ctx);
+        handle_jump(
+            *transform,
+            &mut velocity,
+            &mut input,
+            colliders,
+            &mut state,
+            &ctx,
+        );
 
         // Friction is handled before we add in any base velocity. That way, if we are on a conveyor,
         //  we don't slow when standing still, relative to the conveyor.
@@ -108,7 +115,7 @@ fn run_kcc(
         }
 
         update_grounded(
-            &transform,
+            *transform,
             &mut velocity,
             &move_and_slide,
             colliders,
@@ -431,7 +438,7 @@ fn snap_to_ground(
 }
 
 fn update_grounded(
-    transform: &Transform,
+    transform: Transform,
     velocity: &mut Vec3,
     move_and_slide: &MoveAndSlide,
     colliders: Query<
@@ -459,7 +466,7 @@ fn update_grounded(
 
     let is_on_ladder = false;
     if moving_up_rapidly || (moving_up && is_on_ladder) {
-        set_grounded(None, velocity, colliders, state, ctx);
+        set_grounded(transform, None, velocity, colliders, state, ctx);
     } else {
         let cast_dir = Dir3::NEG_Y;
         let cast_dist = if state.base_velocity.y < 0.0 {
@@ -478,9 +485,9 @@ fn update_grounded(
         if let Some(hit) = hit
             && hit.normal1.y >= ctx.cfg.min_walk_cos
         {
-            set_grounded(hit, velocity, colliders, state, ctx);
+            set_grounded(transform, hit, velocity, colliders, state, ctx);
         } else {
-            set_grounded(None, velocity, colliders, state, ctx);
+            set_grounded(transform, None, velocity, colliders, state, ctx);
             // TODO: set surface friction to 0.25 for some reason
         }
     }
@@ -488,6 +495,7 @@ fn update_grounded(
 }
 
 fn set_grounded(
+    transform: Transform,
     new_ground: impl Into<Option<MoveHitData>>,
     velocity: &mut Vec3,
     colliders: Query<
@@ -508,28 +516,20 @@ fn set_grounded(
 
     if new_ground.is_none()
         && let Some(old_ground) = old_ground
-        && let Ok((ground_velocity, ang_vel, com, pos, rot)) = colliders.get(old_ground.entity)
+        && let Ok((lin_vel, ang_vel, com, pos, rot)) = colliders.get(old_ground.entity)
     {
-        let axis = old_ground.point1 - (com.0 + pos.0);
-        let combined_vel = ground_velocity.0 + ang_vel.0.cross(axis);
-        state.base_velocity.y = combined_vel.y;
+        let platform_movement = calculate_platform_movement(
+            transform, old_ground, lin_vel, ang_vel, com, pos, rot, ctx,
+        );
+        state.base_velocity.y = platform_movement.y / ctx.dt;
     } else if let Some(new_ground) = new_ground
         && let Ok((lin_vel, ang_vel, com, pos, rot)) = colliders.get(new_ground.entity)
     {
-        let platform_transform = Transform::IDENTITY
-            .with_translation(pos.0)
-            .with_rotation(rot.0);
-        let prev_platform_transform = Transform::IDENTITY
-            .with_translation(pos.0 - lin_vel.0 * ctx.dt)
-            .with_rotation(Quat::from_scaled_axis(-ang_vel.0 * ctx.dt) * rot.0);
-        let kcc_movement = platform_transform.transform_point(
-            prev_platform_transform
-                .compute_affine()
-                .inverse()
-                .transform_point3(new_ground.point1),
-        ) - new_ground.point1;
+        let platform_movement = calculate_platform_movement(
+            transform, new_ground, lin_vel, ang_vel, com, pos, rot, ctx,
+        );
 
-        state.base_velocity = kcc_movement / ctx.dt;
+        state.base_velocity = platform_movement / ctx.dt;
     }
 
     state.grounded = new_ground;
@@ -537,6 +537,34 @@ fn set_grounded(
     if state.grounded.is_some() {
         velocity.y = 0.0;
     }
+}
+
+fn calculate_platform_movement(
+    kcc_transform: Transform,
+    ground: MoveHitData,
+    ground_lin_vel: &LinearVelocity,
+    ground_ang_vel: &AngularVelocity,
+    ground_com: &ComputedCenterOfMass,
+    ground_pos: &Position,
+    ground_rot: &Rotation,
+    ctx: &Ctx,
+) -> Vec3 {
+    let ground_com = (ground_rot.0 * ground_com.0) + ground_pos.0;
+    let platform_transform = Transform::IDENTITY
+        .with_translation(ground_com)
+        .with_rotation(ground_rot.0);
+    let next_platform_transform = Transform::IDENTITY
+        .with_translation(ground_com + ground_lin_vel.0 * ctx.dt)
+        .with_rotation(Quat::from_scaled_axis(ground_ang_vel.0 * ctx.dt) * ground_rot.0);
+    let mut touch_point = kcc_transform.translation;
+    touch_point.y = ground.point1.y;
+
+    next_platform_transform.transform_point(
+        platform_transform
+            .compute_affine()
+            .inverse()
+            .transform_point3(touch_point),
+    ) - touch_point
 }
 
 fn friction(velocity: &mut Vec3, state: &CharacterControllerState, ctx: &Ctx) {
@@ -563,6 +591,7 @@ fn friction(velocity: &mut Vec3, state: &CharacterControllerState, ctx: &Ctx) {
 }
 
 fn handle_jump(
+    transform: Transform,
     velocity: &mut Vec3,
     input: &mut AccumulatedInput,
     colliders: Query<
@@ -587,7 +616,7 @@ fn handle_jump(
         return;
     }
     input.jumped = None;
-    set_grounded(None, velocity, colliders, state, ctx);
+    set_grounded(transform, None, velocity, colliders, state, ctx);
     state.last_ground.set_elapsed(ctx.cfg.coyote_time);
 
     // TODO: read ground's jump factor
