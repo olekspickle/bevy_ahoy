@@ -6,7 +6,7 @@ use bevy::{
     image::{ImageAddressMode, ImageSamplerDescriptor},
     input::common_conditions::input_just_pressed,
     prelude::*,
-    window::{CursorGrabMode, CursorOptions, PresentMode, WindowResolution},
+    window::{CursorGrabMode, CursorOptions, WindowResolution},
 };
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
@@ -42,7 +42,8 @@ fn main() -> AppExit {
                         #[cfg(not(target_arch = "wasm32"))]
                         resolution: WindowResolution::new(1920, 1080),
                         fit_canvas_to_parent: true,
-                        present_mode: PresentMode::Mailbox,
+                        #[cfg(not(target_arch = "wasm32"))]
+                        present_mode: bevy::window::PresentMode::Mailbox,
                         ..default()
                     }
                     .into(),
