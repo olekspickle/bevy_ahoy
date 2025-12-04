@@ -167,11 +167,13 @@ fn ground_accelerate(wish_velocity: Vec3, acceleration_hz: f32, time: &Time, ctx
 }
 
 fn air_move(wish_velocity: Vec3, time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
-    air_accelerate(wish_velocity, ctx.cfg.air_acceleration_hz, time, ctx);
-
+    let original_velocity = ctx.velocity.0;
+    ground_accelerate(wish_velocity, ctx.cfg.air_acceleration_hz, time, ctx);
     ctx.velocity.0 += ctx.state.base_velocity;
 
     if !handle_crane(time, move_and_slide, ctx) {
+        ctx.velocity.0 = original_velocity;
+        air_accelerate(wish_velocity, ctx.cfg.air_acceleration_hz, time, ctx);
         step_move(time, move_and_slide, ctx);
     }
 
@@ -289,6 +291,16 @@ fn handle_crane(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) -
     };
     ctx.input.craned = None;
 
+    // Check wall
+    let cast_dir = vel_dir;
+    let cast_len = speed * time.delta_secs() + ctx.cfg.move_and_slide.skin_width * 30.0;
+    let Some(wall_hit) = cast_move(cast_dir * cast_len, move_and_slide, ctx) else {
+        // nothing to move onto
+        ctx.velocity.0 = original_velocity;
+        ctx.state.crouching = original_crouching;
+        return false;
+    };
+
     // step up
     let cast_dir = Dir3::Y;
     let cast_len = ctx.cfg.crane_height;
@@ -299,15 +311,19 @@ fn handle_crane(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) -
     ctx.transform.translation += cast_dir * up_dist;
 
     // Move onto ledge
-    ctx.transform.translation +=
-        vel_dir * ctx.cfg.min_step_ledge_space.max(speed * time.delta_secs());
+    ctx.transform.translation += -wall_hit.normal1 * ctx.cfg.min_step_ledge_space;
 
     // Move down
     let cast_dir = Dir3::NEG_Y;
     let cast_len = up_dist - ctx.cfg.step_size + ctx.cfg.move_and_slide.skin_width;
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
     // Unwrap to 0.0 in case Parry wrongly reports no hit :/
-    let down_dist = hit.map(|hit| hit.distance).unwrap_or(0.0);
+    let Some(down_dist) = hit.map(|hit| hit.distance) else {
+        ctx.transform.translation = original_position;
+        ctx.velocity.0 = original_velocity;
+        ctx.state.crouching = original_crouching;
+        return false;
+    };
     let crane_height = up_dist - down_dist;
 
     // Validate step back
@@ -318,7 +334,6 @@ fn handle_crane(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) -
         ctx.transform.translation = original_position;
         ctx.velocity.0 = original_velocity;
         ctx.state.crouching = original_crouching;
-        info!("e");
         return false;
     }
 
@@ -453,6 +468,9 @@ fn update_grounded(
     // TODO: fire ground changed event
 }
 
+/// Needed to improve stability when `n.dot(dir)` happens to be very close to zero.
+const DOT_EPSILON: f32 = 0.005;
+
 fn cast_move(
     movement: Vec3,
     move_and_slide: &MoveAndSlide,
@@ -465,6 +483,28 @@ fn cast_move(
         movement,
         ctx.cfg.move_and_slide.skin_width,
         &ctx.cfg.filter,
+    )
+}
+
+fn cast_shape(
+    movement: Vec3,
+    move_and_slide: &MoveAndSlide,
+    ctx: &mut CtxItem,
+) -> Option<ShapeHitData> {
+    let (direction, distance) = Dir3::new_and_length(movement).unwrap_or((Dir3::X, 0.0));
+
+    move_and_slide.query_pipeline.cast_shape_predicate(
+        ctx.state.collider(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
+        direction,
+        &ShapeCastConfig {
+            ..ShapeCastConfig::from_max_distance(distance)
+        },
+        &ctx.cfg.filter,
+        // Make sure we don't hit sensors.
+        // TODO: Replace this when spatial queries support excluding sensors directly.
+        &|entity| move_and_slide.colliders.contains(entity),
     )
 }
 
