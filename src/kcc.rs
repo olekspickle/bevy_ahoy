@@ -262,7 +262,7 @@ fn step_move(step_height: f32, time: &Time, move_and_slide: &MoveAndSlide, ctx: 
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
 
     // If we either fall or slide, use the direct slide instead
-    if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos || ctx.cfg.step_into_air) {
+    if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos) {
         ctx.transform.translation = down_position;
         ctx.velocity.0 = down_velocity;
         ctx.state.touching_entities = down_touching_entities;

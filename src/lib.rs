@@ -147,7 +147,6 @@ pub struct CharacterController {
     pub jump_input_buffer: Duration,
     pub crane_input_buffer: Duration,
     pub mantle_input_buffer: Duration,
-    pub step_into_air: bool,
     pub min_step_ledge_space: f32,
     pub max_mantle_dist: f32,
 }
@@ -185,7 +184,6 @@ impl Default for CharacterController {
             jump_input_buffer: Duration::from_millis(150),
             crane_input_buffer: Duration::from_millis(150),
             mantle_input_buffer: Duration::from_millis(150),
-            step_into_air: false,
             // Measured from navel to second phalanx of index finger.
             // This implies that a crouching character can climb less high, as their center is lower.
             max_mantle_dist: 1.15,
