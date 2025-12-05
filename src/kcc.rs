@@ -7,7 +7,7 @@ use bevy_ecs::{
 };
 use core::fmt::Debug;
 use std::time::Duration;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{CharacterControllerState, input::AccumulatedInput, prelude::*};
 
@@ -303,15 +303,16 @@ fn handle_crane(
 
     // Check wall
     let cast_dir = vel_dir;
-    let cast_len = speed * time.delta_secs() + ctx.cfg.move_and_slide.skin_width * 30.0;
+    let cast_len = speed * time.delta_secs() + ctx.cfg.move_and_slide.skin_width;
     let Some(wall_hit) = cast_move(cast_dir * cast_len, move_and_slide, ctx) else {
         // nothing to move onto
         ctx.velocity.0 = original_velocity;
         ctx.state.crouching = original_crouching;
         return false;
     };
+    let wall_normal = vec3(wall_hit.normal1.x, 0.0, wall_hit.normal1.z).normalize_or_zero();
 
-    if (-wall_hit.normal1).dot(*vel_dir) < ctx.cfg.min_crane_cos {
+    if (-wall_normal).dot(*vel_dir) < ctx.cfg.min_crane_cos {
         ctx.velocity.0 = original_velocity;
         ctx.state.crouching = original_crouching;
         return false;
@@ -327,7 +328,7 @@ fn handle_crane(
     ctx.transform.translation += cast_dir * up_dist;
 
     // Move onto ledge (penetration explicitly allowed since the ledge can be below a wall)
-    ctx.transform.translation += -wall_hit.normal1 * ctx.cfg.min_step_ledge_space;
+    ctx.transform.translation += -wall_normal * ctx.cfg.min_crane_ledge_space;
 
     // Move down
     let cast_dir = Dir3::NEG_Y;
@@ -340,10 +341,16 @@ fn handle_crane(
         return false;
     };
     let crane_height = up_dist - down_dist;
+    if crane_height < ctx.cfg.step_size {
+        ctx.transform.translation = original_position;
+        ctx.velocity.0 = original_velocity;
+        ctx.state.crouching = original_crouching;
+        return false;
+    }
 
     // Validate step back
     let cast_dir = -vel_dir;
-    let cast_len = ctx.cfg.min_step_ledge_space.max(speed * time.delta_secs());
+    let cast_len = ctx.cfg.min_crane_ledge_space.max(speed * time.delta_secs());
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
     if hit.is_some() {
         ctx.transform.translation = original_position;
@@ -373,6 +380,13 @@ fn handle_crane(
         ctx.state.crouching = original_crouching;
         return false;
     };
+    if hit.normal1.y < ctx.cfg.min_walk_cos {
+        ctx.transform.translation = original_position;
+        ctx.velocity.0 = original_velocity;
+        ctx.state.touching_entities = original_touching_entities;
+        ctx.state.crouching = original_crouching;
+        return false;
+    }
     ctx.transform.translation += cast_dir * hit.distance;
     depenetrate_character(move_and_slide, ctx);
 
