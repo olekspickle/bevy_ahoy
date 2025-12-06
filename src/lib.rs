@@ -150,9 +150,11 @@ pub struct CharacterController {
     pub mantle_input_buffer: Duration,
     pub min_step_ledge_space: f32,
     pub min_crane_ledge_space: f32,
+    pub min_mantle_ledge_space: f32,
     pub max_mantle_dist: f32,
     pub min_crane_cos: f32,
     pub crane_speed: f32,
+    pub mantle_speed: f32,
 }
 
 impl Default for CharacterController {
@@ -170,7 +172,6 @@ impl Default for CharacterController {
             air_acceleration_hz: 12.0,
             gravity: 29.0,
             step_size: 0.7,
-            crane_height: 1.5,
             crouch_speed_scale: 1.0 / 3.0,
             speed: 12.0,
             air_speed: 1.5,
@@ -186,14 +187,17 @@ impl Default for CharacterController {
             min_crane_cos: 50.0_f32.to_radians().cos(),
             min_step_ledge_space: 0.2,
             min_crane_ledge_space: 0.35,
+            min_mantle_ledge_space: 0.5,
             coyote_time: Duration::from_millis(100),
             jump_input_buffer: Duration::from_millis(150),
             jump_crane_chain_time: Duration::from_millis(140),
             crane_input_buffer: Duration::from_millis(200),
             mantle_input_buffer: Duration::from_millis(150),
+            crane_height: 1.5,
             // Measured from navel to second phalanx of index finger.
-            max_mantle_dist: 1.15,
+            max_mantle_dist: 2.0,
             crane_speed: 15.0,
+            mantle_speed: 1.0,
         }
     }
 }

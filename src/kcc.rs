@@ -283,6 +283,7 @@ fn handle_crane_movement(
 
     let Ok((vel_dir, speed)) = Dir3::new_and_length(ctx.velocity.0) else {
         ctx.state.in_crane = None;
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     };
 
@@ -292,6 +293,7 @@ fn handle_crane_movement(
         vel_dir
     } else {
         ctx.state.in_crane = None;
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     };
     // Check wall
@@ -300,12 +302,14 @@ fn handle_crane_movement(
     let Some(wall_hit) = cast_move(cast_dir * cast_len, move_and_slide, ctx) else {
         // nothing to move onto
         ctx.state.in_crane = None;
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     };
     let wall_normal = vec3(wall_hit.normal1.x, 0.0, wall_hit.normal1.z).normalize_or_zero();
 
     if (-wall_normal).dot(*wish_dir) < ctx.cfg.min_crane_cos {
         ctx.state.in_crane = None;
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     }
 
@@ -331,6 +335,7 @@ fn handle_crane_movement(
             depenetrate_character(move_and_slide, ctx);
             ctx.state.in_crane = None;
         }
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     }
 
@@ -338,11 +343,13 @@ fn handle_crane_movement(
     let cast_len = ctx.cfg.min_crane_ledge_space;
     if cast_move(cast_dir * cast_len, move_and_slide, ctx).is_some() {
         ctx.state.in_crane = None;
+        ctx.velocity.0 -= ctx.state.base_velocity;
         return;
     }
     ctx.transform.translation += cast_dir * speed * time.delta_secs();
     depenetrate_character(move_and_slide, ctx);
     ctx.state.in_crane = None;
+    ctx.velocity.0 -= ctx.state.base_velocity;
 }
 
 fn update_in_crane(
@@ -588,7 +595,7 @@ fn set_grounded(
         && let Ok(platform) = colliders.get(old_ground.entity)
     {
         let platform_movement = calculate_platform_movement(old_ground, &platform, time, ctx);
-        ctx.state.base_velocity.y = platform_movement.y / time.delta_secs();
+        ctx.state.base_velocity = platform_movement / time.delta_secs();
     } else if let Some(new_ground) = new_ground
         && let Ok(platform) = colliders.get(new_ground.entity)
     {
@@ -675,7 +682,7 @@ fn handle_jump(time: &Time, colliders: &Query<ColliderComponents>, ctx: &mut Ctx
     // v^2 = g * g * 2.0 * 45 / g
     // v = sqrt( g * 2.0 * 45 )
     let fl_mul = (2.0 * ctx.cfg.gravity * ctx.cfg.jump_height).sqrt();
-    ctx.velocity.y = ground_factor * fl_mul;
+    ctx.velocity.y = ground_factor * fl_mul + ctx.state.base_velocity.y;
     if let Some(crane_input) = ctx.input.craned.as_mut() {
         crane_input
             .tick((ctx.cfg.crane_input_buffer - ctx.cfg.jump_crane_chain_time).max(Duration::ZERO));
