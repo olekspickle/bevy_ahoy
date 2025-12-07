@@ -704,7 +704,9 @@ fn handle_jump(
         let tac_wish = wish_unit - (wish_dot.min(0.0) - 1.0) * flat_normal;
         // not sure if this is better (reflection)
         //let tac_wish = wish_unit - (wish_dot.min(0.0) * 2.0) * normal;
-        (Vec3::Y * ctx.cfg.tac_jump_factor + tac_wish).normalize() * groundedness
+        (Vec3::Y * ctx.cfg.tac_jump_factor + tac_wish).normalize()
+            * groundedness
+            * ctx.cfg.tac_power
     } else {
         let Some(jump_time) = ctx.input.jumped.clone() else {
             return;
