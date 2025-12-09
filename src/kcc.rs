@@ -220,7 +220,7 @@ fn water_move(
     if wish_velocity == Vec3::ZERO {
         wish_velocity -= Vec3::Y * ctx.cfg.water_gravity;
     };
-    wish_velocity *= 0.8;
+    wish_velocity *= ctx.cfg.water_slowdown;
 
     water_accelerate(wish_velocity, ctx.cfg.water_acceleration_hz, time, ctx);
     ctx.velocity.0 += ctx.state.base_velocity;
