@@ -5,10 +5,9 @@ use bevy_ecs::{
     schedule::ScheduleLabel,
     system::lifetimeless::{Read, Write},
 };
-use bevy_math::VectorSpace;
 use core::fmt::Debug;
-use std::time::Duration;
-use tracing::{error, info, warn};
+use core::time::Duration;
+use tracing::warn;
 
 use crate::{CharacterControllerState, input::AccumulatedInput, prelude::*};
 
@@ -68,7 +67,7 @@ fn run_kcc(
 
         ctx.state.orientation = ctx
             .cam
-            .and_then(|e| cams.get(e.get()).map(|t: &Transform| *t).ok())
+            .and_then(|e| Option::<&Transform>::copied(cams.get(e.get()).ok()))
             .unwrap_or(*ctx.transform);
 
         let wish_velocity = calculate_wish_velocity(&cams, &ctx);
@@ -368,21 +367,19 @@ fn handle_mantle_movement(
     // Find closest wall
     let closest_wall =
         closest_wall_normal(ctx.cfg.move_and_slide.skin_width * 2.0, move_and_slide, ctx);
-    let Some((wall_point, wall_normal)) = closest_wall else {
+    let Some((_wall_point, _wall_normal)) = closest_wall else {
         // floating in air, bail
         ctx.state.mantle_height_left = None;
-        info!("a");
         return;
     };
     let Ok(wish_dir) = Dir3::new(wish_velocity) else {
         // Standing still
-        info!("b");
         return;
     };
 
     let climb_dir = Vec3::Y;
     // positive when looking at the wall or above it, negative when looking down
-    let wish_y = rescale_climb_cos(wish_dir.y, ctx);
+    let wish_y = rescale_climb_cos(wish_dir.y);
 
     let mut climb_dist = (ctx.cfg.mantle_speed * time.delta_secs() * wish_y).min(mantle_height);
     if mantle_height - climb_dist > ctx.cfg.mantle_height - ctx.cfg.min_ledge_grab_space.size().y {
@@ -404,7 +401,7 @@ fn handle_mantle_movement(
     }
 }
 
-fn rescale_climb_cos(cos: f32, ctx: &mut CtxItem) -> f32 {
+fn rescale_climb_cos(cos: f32) -> f32 {
     let signum = cos.signum();
     let cos = cos.abs();
     ((cos + 0.5) * 2.5).clamp(-1.0, 1.0) * signum
@@ -572,34 +569,27 @@ fn update_mantle_state(
 ) {
     if ctx.state.crane_height_left.is_some() {
         ctx.state.mantle_height_left = None;
-        info!("+a");
         return;
     }
     if ctx.state.mantle_height_left.is_some() {
         if ctx.input.jumped.is_some() {
             ctx.input.jumped = None;
             ctx.state.mantle_height_left = None;
-            info!("+b");
         }
         return;
     }
 
     let Some(mantle_time) = ctx.input.mantled.clone() else {
-        info!("+c");
         return;
     };
     if mantle_time.elapsed() > ctx.cfg.mantle_input_buffer {
-        info!("+d");
         return;
     }
 
     let Some(mantle_height) = available_mantle_height(wish_velocity, time, move_and_slide, ctx)
     else {
-        info!("+e");
         return;
     };
-
-    info!(?mantle_height);
 
     ctx.input.craned = None;
     ctx.input.mantled = None;
@@ -712,9 +702,7 @@ fn available_mantle_height(
     ctx.velocity.0 = original_velocity;
 
     // If this doesn't hit, our mantle was actually going through geometry. Bail.
-    let Some(hit) = hit else {
-        return None;
-    };
+    let hit = hit?;
     if hit.normal1.y < ctx.cfg.min_walk_cos {
         return None;
     }
@@ -1078,7 +1066,7 @@ fn validate_velocity(ctx: &mut CtxItem) {
 }
 
 #[must_use]
-fn calculate_wish_velocity(cams: &Query<&Transform>, ctx: &CtxItem) -> Vec3 {
+fn calculate_wish_velocity(_cams: &Query<&Transform>, ctx: &CtxItem) -> Vec3 {
     let movement = ctx.input.last_movement.unwrap_or_default();
     let mut forward = Vec3::from(ctx.state.orientation.forward());
     forward.y = 0.0;
@@ -1100,7 +1088,7 @@ fn calculate_wish_velocity(cams: &Query<&Transform>, ctx: &CtxItem) -> Vec3 {
 }
 
 #[must_use]
-fn calculate_3d_wish_velocity(cams: &Query<&Transform>, ctx: &CtxItem) -> Vec3 {
+fn calculate_3d_wish_velocity(_cams: &Query<&Transform>, ctx: &CtxItem) -> Vec3 {
     let movement = ctx.input.last_movement.unwrap_or_default();
     let forward = ctx.state.orientation.forward();
     let right = ctx.state.orientation.right();
