@@ -42,11 +42,6 @@ impl CharacterControllerCameraOf {
             yank_speed: 210.0_f32.to_radians(),
         }
     }
-
-    pub fn with_yank_speed(mut self, yank_speed: f32) -> Self {
-        self.yank_speed = yank_speed;
-        self
-    }
 }
 
 impl CharacterControllerCameraOf {

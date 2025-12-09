@@ -148,7 +148,10 @@ fn spawn_player(
     let player = commands.spawn((Player, transform)).id();
     commands
         .entity(camera.into_inner())
-        .insert(CharacterControllerCameraOf::new(player).with_yank_speed(80.0_f32.to_radians()));
+        .insert(CharacterControllerCameraOf {
+            yank_speed: 80.0_f32.to_radians(),
+            ..CharacterControllerCameraOf::new(player)
+        });
 }
 
 #[derive(Component, Default)]
