@@ -5,7 +5,7 @@ use bevy_ecs::{lifecycle::HookContext, relationship::Relationship, world::Deferr
 
 use crate::{
     CharacterControllerState,
-    input::{Left, Right, RotateCamera},
+    input::{RotateCamera, YankCamera},
     prelude::*,
 };
 
@@ -15,8 +15,7 @@ pub(super) fn plugin(app: &mut App) {
         sync_camera_transform.after(TransformEasingSystems::UpdateEasingTick),
     )
     .add_observer(rotate_camera)
-    .add_observer(rotate_right)
-    .add_observer(rotate_left);
+    .add_observer(yank_camera);
 }
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -29,6 +28,10 @@ pub struct CharacterControllerCameraOf {
     pub enable_smoothing: bool,
     pub step_smooth_time: Duration,
     pub teleport_detection_distance: f32,
+    /// The yank speed (rotation rate) in **radians per second**.
+    ///
+    /// Gets applied in the [`yank_camera`] system.
+    pub yank_speed: f32,
 }
 
 impl CharacterControllerCameraOf {
@@ -38,7 +41,16 @@ impl CharacterControllerCameraOf {
             enable_smoothing: true,
             step_smooth_time: Duration::from_millis(200),
             teleport_detection_distance: 10.0,
+            yank_speed: 210.0_f32.to_radians(),
         }
+    }
+
+    /// Sets the yank speed.
+    ///
+    /// Expects `degrees_per_sec` (e.g., 180.0 for a half-turn per second).
+    pub fn with_yank_rate(mut self, degrees_per_sec: f32) -> Self {
+        self.yank_speed = degrees_per_sec.to_radians();
+        self
     }
 }
 
@@ -146,22 +158,18 @@ fn rotate_camera(
     transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
 }
 
-fn rotate_right(
-    rotate: On<Fire<Right>>,
+fn yank_camera(
+    trigger: On<Fire<YankCamera>>,
     cameras: Query<&CharacterControllerCamera>,
     mut transforms: Query<&mut Transform>,
     camera_ofs: Query<&CharacterControllerCameraOf>,
-    controllers: Query<&CharacterController>,
     time: Res<Time>,
 ) {
-    let Ok(camera) = cameras.get(rotate.context) else {
+    let Ok(camera) = cameras.get(trigger.context) else {
         return;
     };
 
-    let Ok(controller) = camera_ofs
-        .get(camera.get())
-        .and_then(|c| controllers.get(c.character_controller))
-    else {
+    let Ok(camera_of) = camera_ofs.get(camera.get()) else {
         return;
     };
 
@@ -169,43 +177,17 @@ fn rotate_right(
         return;
     };
 
-    let (mut yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+    let yank_value = trigger.value;
 
-    let rotation_amount = controller.yaw_speed.to_radians() * time.delta_secs();
-
-    yaw -= rotation_amount;
-
-    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
-}
-
-fn rotate_left(
-    rotate: On<Fire<Left>>,
-    cameras: Query<&CharacterControllerCamera>,
-    mut transforms: Query<&mut Transform>,
-    camera_ofs: Query<&CharacterControllerCameraOf>,
-    controllers: Query<&CharacterController>,
-    time: Res<Time>,
-) {
-    let Ok(camera) = cameras.get(rotate.context) else {
+    if yank_value.abs() < 0.01 {
         return;
-    };
-
-    let Ok(controller) = camera_ofs
-        .get(camera.get())
-        .and_then(|c| controllers.get(c.character_controller))
-    else {
-        return;
-    };
-
-    let Ok(mut transform) = transforms.get_mut(camera.get()) else {
-        return;
-    };
+    }
 
     let (mut yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
 
-    let rotation_amount = controller.yaw_speed.to_radians() * time.delta_secs();
+    let rotation_delta = camera_of.yank_speed * yank_value * time.delta_secs();
 
-    yaw += rotation_amount;
+    yaw -= rotation_delta;
 
     transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
 }

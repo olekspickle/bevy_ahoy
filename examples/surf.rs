@@ -8,7 +8,7 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, WindowResolution},
 };
-use bevy_ahoy::input::{Left, Right};
+use bevy_ahoy::input::YankCamera;
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_time::Stopwatch;
@@ -116,7 +116,6 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
         speed: 6.0,
         gravity: 23.0,
         friction_hz: 4.0,
-        yaw_speed: 80.0,
         ..default()
     },
     RigidBody::Kinematic,
@@ -149,7 +148,7 @@ fn spawn_player(
     let player = commands.spawn((Player, transform)).id();
     commands
         .entity(camera.into_inner())
-        .insert(CharacterControllerCameraOf::new(player));
+        .insert(CharacterControllerCameraOf::new(player).with_yank_rate(80.0));
 }
 
 #[derive(Component, Default)]
@@ -179,12 +178,17 @@ impl PlayerInput {
                     bindings![KeyCode::ControlLeft, GamepadButton::LeftTrigger],
                 ),
                 (
-                    Action::<Right>::new(),
-                    bindings![MouseButton::Right],
+                    Action::<YankCamera>::new(),
+                    Bindings::spawn((
+                        Spawn(Binding::from(MouseButton::Right)),
+                    )),
                 ),
                 (
-                    Action::<Left>::new(),
-                    bindings![MouseButton::Left],
+                    Action::<YankCamera>::new(),
+                    Scale::splat(-1.0),
+                    Bindings::spawn((
+                        Spawn(Binding::from(MouseButton::Left)),
+                    )),
                 ),
                 (
                     Action::<RotateCamera>::new(),
