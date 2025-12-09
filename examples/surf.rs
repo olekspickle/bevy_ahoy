@@ -147,7 +147,10 @@ fn spawn_player(
     let player = commands.spawn((Player, transform)).id();
     commands
         .entity(camera.into_inner())
-        .insert(CharacterControllerCameraOf::new(player));
+        .insert(CharacterControllerCameraOf {
+            yank_speed: 80.0_f32.to_radians(),
+            ..CharacterControllerCameraOf::new(player)
+        });
 }
 
 #[derive(Component, Default)]
@@ -175,6 +178,15 @@ impl PlayerInput {
                 (
                     Action::<Crouch>::new(),
                     bindings![KeyCode::ControlLeft, GamepadButton::LeftTrigger],
+                ),
+                (
+                    Action::<YankCamera>::new(),
+                    bindings![MouseButton::Right]
+                ),
+                (
+                    Action::<YankCamera>::new(),
+                    Scale::splat(-1.0),
+                    bindings![MouseButton::Left],
                 ),
                 (
                     Action::<RotateCamera>::new(),

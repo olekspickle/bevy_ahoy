@@ -3,14 +3,15 @@ use std::{f32::consts::TAU, time::Duration};
 use avian_pickup::actor::AvianPickupActor;
 use bevy_ecs::{lifecycle::HookContext, relationship::Relationship, world::DeferredWorld};
 
-use crate::{CharacterControllerState, input::RotateCamera, prelude::*};
+use crate::{CharacterControllerState, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         RunFixedMainLoop,
         sync_camera_transform.after(TransformEasingSystems::UpdateEasingTick),
     )
-    .add_observer(rotate_camera);
+    .add_observer(rotate_camera)
+    .add_observer(yank_camera);
 }
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -23,6 +24,8 @@ pub struct CharacterControllerCameraOf {
     pub enable_smoothing: bool,
     pub step_smooth_time: Duration,
     pub teleport_detection_distance: f32,
+    /// The yank speed (rotation rate) in **radians per second**.
+    pub yank_speed: f32,
 }
 
 impl CharacterControllerCameraOf {
@@ -32,6 +35,7 @@ impl CharacterControllerCameraOf {
             enable_smoothing: true,
             step_smooth_time: Duration::from_millis(200),
             teleport_detection_distance: 10.0,
+            yank_speed: 210.0_f32.to_radians(),
         }
     }
 }
@@ -136,6 +140,30 @@ fn rotate_camera(
     yaw += delta.x.to_radians();
     pitch += delta.y.to_radians();
     pitch = pitch.clamp(-TAU / 4.0 + 0.01, TAU / 4.0 - 0.01);
+
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
+}
+
+fn yank_camera(
+    trigger: On<Fire<YankCamera>>,
+    cameras: Query<&CharacterControllerCamera>,
+    camera_ofs: Query<&CharacterControllerCameraOf>,
+    time: Res<Time>,
+    mut transforms: Query<&mut Transform>,
+) {
+    let Ok(camera) = cameras.get(trigger.context) else {
+        return;
+    };
+    let Ok(camera_of) = camera_ofs.get(camera.get()) else {
+        return;
+    };
+    let Ok(mut transform) = transforms.get_mut(camera.get()) else {
+        return;
+    };
+
+    let (mut yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+    let rotation_delta = camera_of.yank_speed * trigger.value * time.delta_secs();
+    yaw -= rotation_delta;
 
     transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
 }
