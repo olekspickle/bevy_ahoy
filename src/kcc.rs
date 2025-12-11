@@ -446,9 +446,7 @@ fn handle_mantle_movement(
         progress.ledge_position = hit.point1;
         progress.wall_entity = hit.entity;
         if let Ok(platform) = colliders.get(progress.wall_entity) {
-            let platform_movement =
-                calculate_platform_movement(mantle.ledge_position, &platform, time, ctx);
-            ctx.state.base_velocity = platform_movement / time.delta_secs();
+            calculate_platform_movement(mantle.ledge_position, &platform, time, ctx);
         }
     }
 
@@ -963,15 +961,11 @@ fn set_grounded(
         && let Some(old_ground) = old_ground
         && let Ok(platform) = colliders.get(old_ground.entity)
     {
-        let platform_movement =
-            calculate_platform_movement(old_ground.point1, &platform, time, ctx);
-        ctx.state.base_velocity = platform_movement / time.delta_secs();
+        calculate_platform_movement(old_ground.point1, &platform, time, ctx);
     } else if let Some(new_ground) = new_ground
         && let Ok(platform) = colliders.get(new_ground.entity)
     {
-        let platform_movement =
-            calculate_platform_movement(new_ground.point1, &platform, time, ctx);
-        ctx.state.base_velocity = platform_movement / time.delta_secs();
+        calculate_platform_movement(new_ground.point1, &platform, time, ctx);
     }
 
     ctx.state.grounded = new_ground;
@@ -984,13 +978,12 @@ fn set_grounded(
     }
 }
 
-#[must_use]
 fn calculate_platform_movement(
     ground: Vec3,
     platform: &ColliderComponentsReadOnlyItem,
     time: &Time,
-    ctx: &CtxItem,
-) -> Vec3 {
+    ctx: &mut CtxItem,
+) {
     let ground_com = (platform.rot.0 * platform.com.0) + platform.pos.0;
     let platform_transform = Transform::IDENTITY
         .with_translation(ground_com)
@@ -1003,12 +996,14 @@ fn calculate_platform_movement(
     let mut touch_point = ctx.transform.translation;
     touch_point.y = ground.y;
 
-    next_platform_transform.transform_point(
+    let platform_movement = next_platform_transform.transform_point(
         platform_transform
             .compute_affine()
             .inverse()
             .transform_point3(touch_point),
-    ) - touch_point
+    ) - touch_point;
+
+    ctx.state.base_velocity = platform_movement / time.delta_secs();
 }
 
 fn friction(time: &Time, ctx: &mut CtxItem) {
