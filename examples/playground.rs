@@ -420,7 +420,11 @@ impl Npc {
     }
 }
 
-fn spawn_npc(mut commands: Commands) {
+fn spawn_npc(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     commands
         .spawn(Transform::from_translation(NPC_SPAWN_POINT))
         .insert((
@@ -430,6 +434,8 @@ fn spawn_npc(mut commands: Commands) {
             Collider::cylinder(0.7, 1.8),
             Mass(90.0),
             Npc::default(),
+            Mesh3d(meshes.add(bevy::math::primitives::Cylinder::new(0.7, 1.8))),
+            MeshMaterial3d(materials.add(Color::WHITE)),
         ));
 }
 
