@@ -3111,7 +3111,7 @@
 // entity 104
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3632 1616 ) ( -1632 3633 1616 ) ( -1632 3632 1617 ) utopia/computerwall005 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -3153,7 +3153,7 @@
 // entity 107
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3632 1632 ) ( -1632 3633 1632 ) ( -1632 3632 1633 ) utopia/computerwall005 [ 0 -1 0 0 ] [ 0 0 -1 16 ] 90 1 1
@@ -3167,7 +3167,7 @@
 // entity 108
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3648 1648 ) ( -1632 3649 1648 ) ( -1632 3648 1649 ) utopia/computerwall005 [ 0 -1 0 16 ] [ 0 0 -1 32 ] 180 1 1
@@ -3181,7 +3181,7 @@
 // entity 109
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3648 1664 ) ( -1632 3649 1664 ) ( -1632 3648 1665 ) utopia/computerwall005 [ 0 -1 0 16 ] [ 0 0 -1 48 ] 90 1 1
@@ -3195,7 +3195,7 @@
 // entity 110
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3648 1680 ) ( -1632 3649 1680 ) ( -1632 3648 1681 ) utopia/computerwall005 [ 0 -1 0 16 ] [ 0 0 -1 64 ] 0 1 1
@@ -3209,7 +3209,7 @@
 // entity 111
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -1632 3648 1696 ) ( -1632 3649 1696 ) ( -1632 3648 1697 ) utopia/computerwall005 [ 0 -1 0 16 ] [ 0 0 -1 80 ] 270 1 1
@@ -3223,7 +3223,7 @@
 // entity 112
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 "angles" "0 0 -30"
 // brush 0
 {
@@ -3238,7 +3238,7 @@
 // entity 113
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 "angles" "0 0 -60"
 // brush 0
 {
@@ -3253,7 +3253,7 @@
 // entity 114
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -1232 3632 1616 ) ( -1232 3633 1616 ) ( -1232 3632 1617 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 0 ] [ 0 0 -1 0 ] 270 1.2 1
@@ -3267,7 +3267,7 @@
 // entity 115
 {
 "classname" "ice"
-"friction" "0.25"
+"friction" "0.125"
 // brush 0
 {
 ( -960 3632 1616 ) ( -960 3633 1616 ) ( -960 3632 1617 ) utopia/computerwall005 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 180 1 1
@@ -3281,7 +3281,7 @@
 // entity 116
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -560 3632 1616 ) ( -560 3633 1616 ) ( -560 3632 1617 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1.2 1
@@ -3295,7 +3295,7 @@
 // entity 117
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -416 3280 1632 ) ( -416 3281 1632 ) ( -416 3280 1633 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 -352 ] [ 0 0 -1 16 ] 90 1 1
@@ -3309,7 +3309,7 @@
 // entity 118
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -416 3296 1648 ) ( -416 3297 1648 ) ( -416 3296 1649 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 -336 ] [ 0 0 -1 32 ] 180 1 1
@@ -3323,7 +3323,7 @@
 // entity 119
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -416 3296 1664 ) ( -416 3297 1664 ) ( -416 3296 1665 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 -336 ] [ 0 0 -1 48 ] 90 1 1
@@ -3337,7 +3337,7 @@
 // entity 120
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -416 3296 1680 ) ( -416 3297 1680 ) ( -416 3296 1681 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 -336 ] [ 0 0 -1 64 ] 0 1 1
@@ -3351,7 +3351,7 @@
 // entity 121
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 // brush 0
 {
 ( -416 3296 1696 ) ( -416 3297 1696 ) ( -416 3296 1697 ) utopia/trim_plaster_white_flat_rough [ 0 -1 0 -336 ] [ 0 0 -1 80 ] 270 1 1
@@ -3365,7 +3365,7 @@
 // entity 122
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 "angles" "0 0 -30"
 // brush 0
 {
@@ -3380,7 +3380,7 @@
 // entity 123
 {
 "classname" "ice"
-"friction" "4.0"
+"friction" "2.0"
 "angles" "0 0 -60"
 // brush 0
 {

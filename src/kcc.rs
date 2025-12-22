@@ -39,6 +39,13 @@ struct ColliderComponents {
     pos: Read<Position>,
     rot: Read<Rotation>,
     friction: Option<Read<Friction>>,
+    body: Read<ColliderOf>,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable, derive(Debug))]
+struct RigidBodyComponents {
+    friction: Option<Read<Friction>>,
 }
 
 fn run_kcc(
@@ -47,8 +54,10 @@ fn run_kcc(
     time: Res<Time>,
     move_and_slide: MoveAndSlide,
     // TODO: allow this to be other KCCs
-    colliders: Query<ColliderComponents, (Without<CharacterController>, With<Collider>)>,
+    colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
+    rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
+    default_friction: Res<DefaultFriction>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
@@ -96,7 +105,13 @@ fn run_kcc(
 
             // Friction is handled before we add in any base velocity. That way, if we are on a conveyor,
             //  we don't slow when standing still, relative to the conveyor.
-            friction(&time, &colliders, &mut ctx);
+            friction(
+                &time,
+                &colliders,
+                &rigid_bodies,
+                &default_friction,
+                &mut ctx,
+            );
 
             validate_velocity(&mut ctx);
 
@@ -1006,7 +1021,13 @@ fn calculate_platform_movement(
     ctx.state.base_angular_velocity = platform_ang_vel;
 }
 
-fn friction(time: &Time, colliders: &Query<ColliderComponents>, ctx: &mut CtxItem) {
+fn friction(
+    time: &Time,
+    colliders: &Query<ColliderComponents>,
+    rigid_bodies: &Query<RigidBodyComponents>,
+    default_friction: &DefaultFriction,
+    ctx: &mut CtxItem,
+) {
     let speed = if ctx.state.grounded.is_some() {
         ctx.velocity.xz().length()
     } else if ctx.water.level > WaterLevel::Feet {
@@ -1021,11 +1042,20 @@ fn friction(time: &Time, colliders: &Query<ColliderComponents>, ctx: &mut CtxIte
     let mut drop = 0.0;
     let surface_friction = if let Some(grounded) = ctx.state.grounded.as_ref()
         && let Ok(ground) = colliders.get(grounded.entity)
-        && let Some(friction) = ground.friction
     {
-        friction.dynamic_coefficient
+        if let Some(friction) = ground.friction {
+            friction.dynamic_coefficient
+        } else if let Some(friction) = rigid_bodies
+            .get(ground.body.body)
+            .ok()
+            .and_then(|rb| rb.friction)
+        {
+            friction.dynamic_coefficient
+        } else {
+            default_friction.dynamic_coefficient
+        }
     } else {
-        1.0
+        Friction::default().dynamic_coefficient
     };
 
     let friction = ctx.cfg.friction_hz * surface_friction;
