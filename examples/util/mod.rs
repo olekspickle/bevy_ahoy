@@ -58,7 +58,7 @@ fn update_debug_text(
             &CollidingEntities,
             &ColliderAabb,
         ),
-        With<CharacterController>,
+        (With<CharacterController>, With<CharacterControllerCamera>),
     >,
     camera: Single<&Transform, With<Camera>>,
     names: Query<NameOrEntity>,
