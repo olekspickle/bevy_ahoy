@@ -129,7 +129,6 @@ pub struct CharacterController {
     pub filter: SpatialQueryFilter,
     pub standing_view_height: f32,
     pub crouch_view_height: f32,
-    pub jump_crouch_view_height: f32,
     pub ground_distance: f32,
     pub step_down_detection_distance: f32,
     pub min_walk_cos: f32,
@@ -185,7 +184,6 @@ impl Default for CharacterController {
             filter: SpatialQueryFilter::default(),
             standing_view_height: 1.7,
             crouch_view_height: 1.2,
-            jump_crouch_view_height: 1.45,
             ground_distance: 0.05,
             min_walk_cos: 40.0_f32.to_radians().cos(),
             stop_speed: 2.54,
@@ -298,11 +296,6 @@ fn setup_collider(
         // note: well-behaved shapes like cylinders and cuboids will not actually subdivide when scaled, yay
         crouching_collider.set_scale(vec3(1.0, frac, 1.0), 16);
     }
-    state.jump_crouching_collider = Collider::compound(vec![(
-        Vec3::ZERO,
-        Rotation::default(),
-        crouching_collider.clone(),
-    )]);
 
     state.crouching_collider = Collider::compound(vec![(
         Vec3::Y * (cfg.crouch_height - standing_height) / 2.0,
@@ -323,8 +316,6 @@ pub struct CharacterControllerState {
     pub standing_collider: Collider,
     #[reflect(ignore)]
     pub crouching_collider: Collider,
-    #[reflect(ignore)]
-    pub jump_crouching_collider: Collider,
     #[reflect(ignore)]
     pub hand_collider: Collider,
     pub grounded: Option<MoveHitData>,
@@ -348,7 +339,6 @@ impl Default for CharacterControllerState {
             // late initialized
             standing_collider: default(),
             crouching_collider: default(),
-            jump_crouching_collider: default(),
             hand_collider: default(),
             grounded: None,
             crouching: false,
@@ -381,11 +371,7 @@ fn max_stopwatch() -> Stopwatch {
 impl CharacterControllerState {
     pub fn collider(&self) -> &Collider {
         if self.crouching {
-            if self.grounded.is_some() {
-                &self.crouching_collider
-            } else {
-                &self.jump_crouching_collider
-            }
+            &self.crouching_collider
         } else {
             &self.standing_collider
         }
