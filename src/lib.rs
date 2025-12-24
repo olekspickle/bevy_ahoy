@@ -233,7 +233,7 @@ impl Default for CharacterController {
             min_ledge_grab_space: Cuboid::new(0.2, 0.1, 0.2),
             climb_pull_up_height: 0.3,
             max_ledge_grab_distance: 0.3,
-            climb_reverse_sin: 20.0_f32.to_radians().sin(),
+            climb_reverse_sin: 40.0_f32.to_radians().sin(),
             climb_sensitivity: 2.5,
         }
     }

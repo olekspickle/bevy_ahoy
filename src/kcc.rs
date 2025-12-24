@@ -5,7 +5,6 @@ use bevy_ecs::{
     schedule::ScheduleLabel,
     system::lifetimeless::{Read, Write},
 };
-use bevy_time::Stopwatch;
 use core::fmt::Debug;
 use core::time::Duration;
 use tracing::warn;
@@ -847,7 +846,6 @@ fn handle_climbdown(
 
     ctx.input.craned = None;
     ctx.input.mantled = None;
-    // Ensure we don't immediately jump on the surface if mantle and jump are bound to the same key
     ctx.input.jumped = None;
     ctx.input.climbdown = None;
 
