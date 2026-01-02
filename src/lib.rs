@@ -312,8 +312,8 @@ fn setup_collider(
 #[reflect(Component)]
 pub struct CharacterControllerState {
     pub orientation: Quat,
-    pub base_velocity: Vec3,
-    pub base_angular_velocity: Vec3,
+    pub platform_velocity: Vec3,
+    pub platform_angular_velocity: Vec3,
     #[reflect(ignore)]
     pub standing_collider: Collider,
     #[reflect(ignore)]
@@ -335,8 +335,8 @@ pub struct CharacterControllerState {
 impl Default for CharacterControllerState {
     fn default() -> Self {
         Self {
-            base_velocity: Vec3::ZERO,
-            base_angular_velocity: Vec3::ZERO,
+            platform_velocity: Vec3::ZERO,
+            platform_angular_velocity: Vec3::ZERO,
             orientation: Quat::IDENTITY,
             // late initialized
             standing_collider: default(),
