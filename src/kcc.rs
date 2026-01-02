@@ -10,8 +10,8 @@ use core::time::Duration;
 use tracing::warn;
 
 use crate::{
-    CharacterControllerDerivedProps, CharacterControllerState, MantleProgress,
-    input::AccumulatedInput, prelude::*,
+    CharacterControllerDerivedProps, CharacterControllerOutput, CharacterControllerState,
+    MantleProgress, input::AccumulatedInput, prelude::*,
 };
 
 pub(super) fn plugin(schedule: Interned<dyn ScheduleLabel>) -> impl Fn(&mut App) {
@@ -27,6 +27,7 @@ struct Ctx {
     velocity: Write<LinearVelocity>,
     state: Write<CharacterControllerState>,
     derived: Read<CharacterControllerDerivedProps>,
+    output: Write<CharacterControllerOutput>,
     transform: Write<Transform>,
     input: Write<AccumulatedInput>,
     cfg: Read<CharacterController>,
@@ -68,7 +69,7 @@ fn run_kcc(
     let mut waters = waters.transmute_lens_inner();
     let waters = waters.query();
     for mut ctx in &mut kccs {
-        ctx.state.touching_entities.clear();
+        ctx.output.touching_entities.clear();
         ctx.state.last_ground.tick(time.delta());
         ctx.state.last_tac.tick(time.delta());
         ctx.state.last_step_up.tick(time.delta());
@@ -282,18 +283,18 @@ fn water_accelerate(wish_velocity: Vec3, acceleration_hz: f32, time: &Time, ctx:
 fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     let original_position = ctx.transform.translation;
     let original_velocity = ctx.velocity.0;
-    let original_touching_entities = ctx.state.touching_entities.clone();
+    let original_touching_entities = ctx.output.touching_entities.clone();
 
     // Slide the direct path
     move_character(time, move_and_slide, ctx);
 
-    let down_touching_entities = ctx.state.touching_entities.clone();
+    let down_touching_entities = ctx.output.touching_entities.clone();
     let down_position = ctx.transform.translation;
     let down_velocity = ctx.velocity.0;
 
     ctx.transform.translation = original_position;
     ctx.velocity.0 = original_velocity;
-    ctx.state.touching_entities = original_touching_entities;
+    ctx.output.touching_entities = original_touching_entities;
 
     // step up
     let cast_dir = Dir3::Y;
@@ -313,7 +314,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     if hit.is_some() {
         ctx.transform.translation = down_position;
         ctx.velocity.0 = down_velocity;
-        ctx.state.touching_entities = down_touching_entities;
+        ctx.output.touching_entities = down_touching_entities;
         return;
     }
 
@@ -327,7 +328,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos) {
         ctx.transform.translation = down_position;
         ctx.velocity.0 = down_velocity;
-        ctx.state.touching_entities = down_touching_entities;
+        ctx.output.touching_entities = down_touching_entities;
         return;
     };
     let hit = hit.unwrap();
@@ -342,7 +343,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     if down_dist >= up_dist {
         ctx.transform.translation = down_position;
         ctx.velocity.0 = down_velocity;
-        ctx.state.touching_entities = down_touching_entities;
+        ctx.output.touching_entities = down_touching_entities;
     } else {
         ctx.velocity.y = down_velocity.y;
         ctx.state.last_step_up.reset();
@@ -857,7 +858,6 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
         config.planes.push(Dir3::new_unchecked(grounded.normal1));
     }
 
-    let mut touching_entities = std::mem::take(&mut ctx.state.touching_entities);
     let out = move_and_slide.move_and_slide(
         ctx.derived.collider(&ctx.state),
         ctx.transform.translation,
@@ -867,7 +867,7 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
         &config,
         &ctx.cfg.filter,
         |hit| {
-            touching_entities.push(hit.into());
+            ctx.output.touching_entities.push(hit.into());
             true
         },
     );
@@ -875,7 +875,6 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
     ctx.state.tac_velocity = ctx.state.tac_velocity * 0.99 + lost_velocity;
     ctx.transform.translation = out.position;
     ctx.velocity.0 = out.projected_velocity;
-    std::mem::swap(&mut ctx.state.touching_entities, &mut touching_entities);
 }
 
 fn snap_to_ground(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {

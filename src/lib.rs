@@ -116,6 +116,7 @@ pub enum AhoySystems {
     AccumulatedInput,
     CharacterControllerState,
     CharacterControllerDerivedProps,
+    CharacterControllerOutput,
     TranslationInterpolation,
     RigidBody = RigidBody::Kinematic,
     WaterState,
@@ -322,7 +323,6 @@ pub struct CharacterControllerState {
     pub grounded: Option<MoveHitData>,
     pub crouching: bool,
     pub tac_velocity: f32,
-    pub touching_entities: Vec<TouchingEntity>,
     pub last_ground: Stopwatch,
     pub last_tac: Stopwatch,
     pub last_step_up: Stopwatch,
@@ -340,7 +340,6 @@ impl Default for CharacterControllerState {
             grounded: None,
             crouching: false,
             tac_velocity: 0.0,
-            touching_entities: Vec::new(),
             last_ground: max_stopwatch(),
             last_tac: max_stopwatch(),
             last_step_up: max_stopwatch(),
@@ -449,6 +448,17 @@ impl CharacterControllerDerivedProps {
             }
         }
     }
+}
+
+/// Properties computed during movement useful for gameplay systems.
+///
+/// Note this only includes results that are "transient" for a frame (or in other words, is
+/// exclusively an output). For example, while "crouching" is technically a result of movement, it
+/// is also used as input in the next frame.
+#[derive(Component, Reflect, PartialEq, Debug, Default)]
+pub struct CharacterControllerOutput {
+    /// The entities this character is touching.
+    pub touching_entities: Vec<TouchingEntity>,
 }
 
 /// Data related to a hit during [`MoveAndSlide::move_and_slide`].
