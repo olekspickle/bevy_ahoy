@@ -6,7 +6,7 @@ use avian3d::prelude::*;
 use bevy::{
     camera::Exposure,
     light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap, light_consts::lux},
-    pbr::Atmosphere,
+    pbr::{Atmosphere, ScatteringMedium},
     platform::collections::HashSet,
     post_process::bloom::Bloom,
     prelude::*,
@@ -43,7 +43,7 @@ impl Plugin for ExampleUtilPlugin {
         .add_observer(toggle_debug)
         .add_observer(unlock_cursor_web)
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
-        .insert_resource(AmbientLight::NONE)
+        .insert_resource(GlobalAmbientLight::NONE)
         .add_systems(Update, turn_sun)
         .add_input_context::<DebugInput>();
     }
@@ -223,7 +223,12 @@ fn reset_player_inner(
     camera_transform.rotation = Quat::IDENTITY;
 }
 
-fn tweak_camera(insert: On<Insert, Camera3d>, mut commands: Commands, assets: Res<AssetServer>) {
+fn tweak_camera(
+    insert: On<Insert, Camera3d>,
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+) {
     commands.entity(insert.entity).insert((
         EnvironmentMapLight {
             diffuse_map: assets.load("environment_maps/voortrekker_interior_1k_diffuse.ktx2"),
@@ -235,7 +240,7 @@ fn tweak_camera(insert: On<Insert, Camera3d>, mut commands: Commands, assets: Re
             fov: 70.0_f32.to_radians(),
             ..default()
         }),
-        Atmosphere::EARTH,
+        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         Exposure { ev100: 9.0 },
         Bloom::default(),
     ));

@@ -7,10 +7,10 @@
 > \[!IMPORTANT\]  
 > Bevy Ahoy makes use of an unreleased avian version.
 >
-> To ensure it works you'll need to add a patch in your Cargo.toml
+> To ensure it works you'll need to depend on the newest version from git:
 > ```toml
-> [patch.crates-io]
-> avian3d = { git = "https://github.com/avianphysics/avian" }
+> [dependencies]
+> avian3d = { version = "0.6.0-dev", git = "https://github.com/avianphysics/avian" }
 > ```
 
 A fun 3D Kinematic Character Controller for [Bevy](https://github.com/bevyengine/bevy) + [Avian](https://github.com/avianphysics/avian) + [BEI](https://github.com/simgine/bevy_enhanced_input).
@@ -172,6 +172,7 @@ In contrast, here are some deliberate non-goals:
 
 ## Compatibility
 
-| bevy        | bevy_ahoy              |
-|-------------|------------------------|
-| 0.17        | `main`                 |
+| bevy        | bevy_ahoy              | avian3d    |
+|-------------|------------------------|------------|
+| 0.18        | 0.0.3                  | 0.6.0-dev  |
+| 0.17        | 0.0.2                  | `5bef3827444436558de3194452b7e1ced5c557a6`  |
