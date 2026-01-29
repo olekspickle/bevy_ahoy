@@ -3,7 +3,7 @@ use avian3d::prelude::*;
 use bevy::{
     color::palettes::tailwind,
     ecs::{lifecycle::HookContext, world::DeferredWorld},
-    gltf::GltfPlugin,
+    gltf::{GltfPlugin, convert_coordinates::GltfConvertCoordinates},
     image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
     input::common_conditions::input_just_pressed,
     prelude::*,
@@ -22,7 +22,10 @@ fn main() -> AppExit {
         .add_plugins((
             DefaultPlugins
                 .set(GltfPlugin {
-                    use_model_forward_direction: true,
+                    convert_coordinates: GltfConvertCoordinates {
+                        rotate_scene_entity: true,
+                        rotate_meshes: true,
+                    },
                     ..default()
                 })
                 .set(ImagePlugin {
