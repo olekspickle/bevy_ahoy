@@ -389,7 +389,7 @@ pub struct CharacterControllerState {
     /// jumped off of).
     pub platform_angular_velocity: Vec3,
     pub grounded: Option<MoveHitData>,
-    pub last_stable_ground: VecDeque<Vec3>,
+    pub stable_grounds: VecDeque<Vec3>,
     pub crouching: bool,
     pub tac_velocity: f32,
     pub terminal: Stopwatch,
@@ -411,7 +411,7 @@ impl Default for CharacterControllerState {
             platform_angular_velocity: Vec3::ZERO,
             orientation: Quat::IDENTITY,
             grounded: None,
-            last_stable_ground: VecDeque::default(),
+            stable_grounds: VecDeque::default(),
             crouching: false,
             tac_velocity: 0.0,
             terminal: max_stopwatch(),

@@ -1388,12 +1388,12 @@ pub(crate) fn calculate_stable_ground(
 
         // If we don't compare to EPSILON, Vec3::y will *almost* always be 0.9...
         if up_diff <= f32::EPSILON {
-            state.last_stable_ground.push_front(transform.translation);
+            state.stable_grounds.push_front(transform.translation);
 
             // Used to ensure that player doesn't get stuck in infinite loop if the most recent
             // stable ground wasn't so stable.
-            while state.last_stable_ground.len() > 5 {
-                state.last_stable_ground.pop_back();
+            while state.stable_grounds.len() > 5 {
+                state.stable_grounds.pop_back();
             }
         }
     }
@@ -1421,7 +1421,7 @@ pub(crate) fn apply_last_stable_ground(
 
         let max_fall_elapsed = state.terminal.elapsed() >= controller.max_fall_time;
 
-        if max_fall_elapsed && let Some(last_stable_ground) = state.last_stable_ground.pop_front() {
+        if max_fall_elapsed && let Some(last_stable_ground) = state.stable_grounds.pop_front() {
             transform.translation = last_stable_ground;
         }
     }
