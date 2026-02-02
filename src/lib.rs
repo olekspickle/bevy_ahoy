@@ -53,7 +53,7 @@ use bevy_ecs::{
 };
 use bevy_time::Stopwatch;
 use core::time::Duration;
-use std::sync::Arc;
+use std::{collections::VecDeque, sync::Arc};
 
 pub mod camera;
 mod dynamics;
@@ -389,9 +389,10 @@ pub struct CharacterControllerState {
     /// jumped off of).
     pub platform_angular_velocity: Vec3,
     pub grounded: Option<MoveHitData>,
-    pub last_stable_ground: Option<Vec3>,
+    pub last_stable_ground: VecDeque<Vec3>,
     pub crouching: bool,
     pub tac_velocity: f32,
+    pub terminal: Stopwatch,
     pub last_ground: Stopwatch,
     pub last_tac: Stopwatch,
     pub last_step_up: Stopwatch,
@@ -410,9 +411,10 @@ impl Default for CharacterControllerState {
             platform_angular_velocity: Vec3::ZERO,
             orientation: Quat::IDENTITY,
             grounded: None,
-            last_stable_ground: None,
+            last_stable_ground: VecDeque::default(),
             crouching: false,
             tac_velocity: 0.0,
+            terminal: max_stopwatch(),
             last_ground: max_stopwatch(),
             last_tac: max_stopwatch(),
             last_step_up: max_stopwatch(),
