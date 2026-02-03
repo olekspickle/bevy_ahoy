@@ -886,7 +886,7 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
         &ctx.cfg.filter,
         |hit| {
             ctx.output.touching_entities.push(hit.into());
-            true
+            MoveAndSlideHitResponse::Accept
         },
     );
     let lost_velocity = (ctx.velocity.0 - out.projected_velocity).length();
