@@ -156,7 +156,6 @@ impl PlayerInput {
             .insert(actions!(PlayerInput[
                 (
                     Action::<Movement>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     DeadZone::default(),
                     Bindings::spawn((
                         Cardinal::wasd_keys(),
@@ -165,7 +164,6 @@ impl PlayerInput {
                 ),
                 (
                     Action::<Jump>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     Press::default(),
                     bindings![
                         KeyCode::Space,
@@ -175,7 +173,6 @@ impl PlayerInput {
                 ),
                 (
                     Action::<Tac>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     Press::default(),
                     bindings![
                         KeyCode::Space,
@@ -185,7 +182,6 @@ impl PlayerInput {
                 ),
                 (
                     Action::<Crane>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     Press::default(),
                     bindings![
                         KeyCode::Space,
@@ -195,7 +191,6 @@ impl PlayerInput {
                 ),
                 (
                     Action::<Mantle>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     Hold::new(0.2),
                     bindings![
                         KeyCode::Space,
@@ -204,17 +199,14 @@ impl PlayerInput {
                 ),
                 (
                     Action::<Climbdown>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     bindings![KeyCode::ControlLeft, GamepadButton::LeftTrigger2],
                 ),
                 (
                     Action::<Crouch>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     bindings![KeyCode::ControlLeft, GamepadButton::LeftTrigger2],
                 ),
                 (
                     Action::<SwimUp>::new(),
-                    ActionSettings { consume_input: false, ..default() },
                     bindings![KeyCode::Space, GamepadButton::South],
                 ),
                 (
@@ -237,7 +229,6 @@ impl PlayerInput {
                 ),
                 (
                     Action::<RotateCamera>::new(),
-                    ActionSettings { consume_input: false, ..default() },
 
                     Bindings::spawn((
                         Spawn((Binding::mouse_motion(), Scale::splat(0.07))),
@@ -481,14 +472,8 @@ fn spawn_npc(mut commands: Commands) {
     commands.spawn((Npc::default(), Transform::from_translation(NPC_SPAWN_POINT)));
 }
 
-fn update_npc(
-    time: Res<Time>,
-    mut npcs: Query<(&mut Npc, &Actions<Npc>)>,
-    mut action_mocks: Query<&mut ActionMock>,
-    global_movements: Query<(), With<Action<GlobalMovement>>>,
-    jumps: Query<(), With<Action<Jump>>>,
-) {
-    for (mut npc, actions) in &mut npcs {
+fn update_npc(mut commands: Commands, time: Res<Time>, mut npcs: Query<(Entity, &mut Npc)>) {
+    for (entity, mut npc) in &mut npcs {
         npc.timer.tick(time.delta());
         if npc.timer.is_finished() {
             if npc.timer.duration() != Duration::ZERO {
@@ -517,18 +502,13 @@ fn update_npc(
             5..=9 => (Vec3::ZERO, true),
             _ => (Vec3::ZERO, false),
         };
-
-        for action_entity in actions {
-            if let Ok(mut mock) = action_mocks.get_mut(action_entity) {
-                if global_movements.contains(action_entity) {
-                    mock.enabled = move_vec != Vec3::ZERO;
-                    if mock.enabled {
-                        mock.value = move_vec.into();
-                    }
-                } else if jumps.contains(action_entity) {
-                    mock.enabled = jump;
-                }
-            }
+        commands
+            .entity(entity)
+            .mock_once::<Npc, GlobalMovement>(ActionState::Fired, move_vec);
+        if jump {
+            commands
+                .entity(entity)
+                .mock_once::<Npc, Jump>(ActionState::Fired, true);
         }
     }
 }
