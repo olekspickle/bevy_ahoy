@@ -4,7 +4,7 @@ use bevy::{
     color::palettes::tailwind,
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     gltf::{GltfPlugin, convert_coordinates::GltfConvertCoordinates},
-    image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
+    image::{ImageAddressMode, ImageSamplerDescriptor},
     input::common_conditions::input_just_pressed,
     prelude::*,
     window::{CursorGrabMode, CursorOptions, WindowResolution},
@@ -72,14 +72,7 @@ fn main() -> AppExit {
                         .into_iter()
                         .map(String::from)
                         .collect::<std::collections::HashSet<_>>(),
-                    )
-                    .texture_sampler(ImageSampler::Descriptor(ImageSamplerDescriptor {
-                        address_mode_u: ImageAddressMode::Repeat,
-                        address_mode_v: ImageAddressMode::Repeat,
-                        address_mode_w: ImageAddressMode::Repeat,
-                        anisotropy_clamp: 16,
-                        ..ImageSamplerDescriptor::linear()
-                    })),
+                    ),
             ),
             TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend),
             ExampleUtilPlugin,

@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     gltf::{GltfPlugin, convert_coordinates::GltfConvertCoordinates},
-    image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
+    image::{ImageAddressMode, ImageSamplerDescriptor},
     input::common_conditions::input_just_pressed,
     prelude::*,
     window::{CursorGrabMode, CursorOptions},
@@ -51,19 +51,11 @@ fn main() -> AppExit {
             EnhancedInputPlugin,
             AhoyPlugins::default(),
             TrenchBroomPlugins(
-                TrenchBroomConfig::new("bevy_ahoy")
-                    .default_solid_scene_hooks(|| {
-                        SceneHooks::new()
-                            .convex_collider()
-                            .smooth_by_default_angle()
-                    })
-                    .texture_sampler(ImageSampler::Descriptor(ImageSamplerDescriptor {
-                        address_mode_u: ImageAddressMode::Repeat,
-                        address_mode_v: ImageAddressMode::Repeat,
-                        address_mode_w: ImageAddressMode::Repeat,
-                        anisotropy_clamp: 16,
-                        ..ImageSamplerDescriptor::linear()
-                    })),
+                TrenchBroomConfig::new("bevy_ahoy").default_solid_scene_hooks(|| {
+                    SceneHooks::new()
+                        .convex_collider()
+                        .smooth_by_default_angle()
+                }),
             ),
             TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend),
             ExampleUtilPlugin,
